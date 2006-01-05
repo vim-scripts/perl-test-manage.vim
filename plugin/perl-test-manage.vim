@@ -27,25 +27,24 @@
 " License: MIT X11
 " 
 
+function! s:get_product(line_contents)
+    let num_tests_to_add = 1
+    let multipliers = substitute(a:line_contents, "^.*# \\+TEST", "", "")
+    let star_m = matchstr(multipliers, "^\\*\\d\\+")
+    while star_m != ""
+        let multipliers = substitute(multipliers, "^\\*\\d\\+", "", "")
+        let num_tests_to_add = num_tests_to_add * strpart(star_m,1)
+        let star_m = matchstr(multipliers, "^\\*\\d\\+")
+    endwhile
+    return num_tests_to_add
+endfunction
+
 function! Perl_Tests_Count()
     " Position the cursor at the beginning of the file
     call cursor(1,1)
-    " Count the number of lines which indicate a test
+    " Count the number of tests
     let mycount = 0
-    while search("# \\+TEST", "W") > 0
-        let num_tests_to_add = 1
-        let line_contents = getline(line("."))
-        let multipliers = substitute(line_contents, "^.*# \\+TEST", "", "")
-        let star_m = matchstr(multipliers, "^\\*\\d\\+")
-        while star_m != ""
-            let multipliers = substitute(multipliers, "^\\*\\d\\+", "", "")
-            let mult = substitute(star_m, "^\\*", "", "")
-            let num_tests_to_add = num_tests_to_add * mult
-            let star_m = matchstr(multipliers, "^\\*\\d\\+")
-        endwhile
-        
-        let mycount = mycount + num_tests_to_add
-    endwhile
+    g/# \+TEST/let mycount=mycount + s:get_product(getline("."))
     call cursor(1,1)
     call search("^use \\(Test::More\\|CondTestMore\\)","W")
     let line_contents = getline(line("."))
